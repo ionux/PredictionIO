@@ -9,10 +9,12 @@
 # License: http://www.apache.org/licenses/LICENSE-2.0
 
 OS=`uname`
-PIO_VERSION=0.9.4
-SPARK_VERSION=1.4.1
+PIO_VERSION=0.9.5
+SPARK_VERSION=1.5.1
 ELASTICSEARCH_VERSION=1.4.4
 HBASE_VERSION=1.0.0
+POSTGRES_VERSION=9.4-1204.jdbc41
+MYSQL_VERSION=5.1.37
 PIO_DIR=$HOME/PredictionIO
 USER_PROFILE=$HOME/.profile
 PIO_FILE=PredictionIO-${PIO_VERSION}.tar.gz
@@ -71,6 +73,7 @@ if [[ "$OS" = "Linux" && $(cat /proc/1/cgroup) == *cpu:/docker/* ]]; then
   echo -e "\033[1;33mForcing Docker defaults!\033[0m"
   pio_dir=${PIO_DIR}
   vendors_dir=${pio_dir}/vendors
+  source_setup=${ES_HB}
 
   spark_dir=${vendors_dir}/spark-${SPARK_VERSION}
   elasticsearch_dir=${vendors_dir}/elasticsearch-${ELASTICSEARCH_VERSION}
@@ -238,7 +241,7 @@ else
         break
         ;;
       "$DISTRO_OTHER")
-        echo -e "\033[1;31mYour disribution not yet supported for automatic install :(\033[0m"
+        echo -e "\033[1;31mYour distribution not yet supported for automatic install :(\033[0m"
         echo -e "\033[1;31mPlease install Java manually!\033[0m"
         exit 2
         ;;
@@ -331,10 +334,12 @@ case $source_setup in
       sudo -u postgres createuser -P pio
       echo -e "\033[1;36mPlease update $pio_dir/conf/pio-env.sh if you did not enter the default password\033[0m"
     else
-      echo -e "\033[1;31mYour disribution not yet supported for automatic install :(\033[0m"
+      echo -e "\033[1;31mYour distribution not yet supported for automatic install :(\033[0m"
       echo -e "\033[1;31mPlease install PostgreSQL manually!\033[0m"
       exit 3
     fi
+    curl -O https://jdbc.postgresql.org/download/postgresql-${POSTGRES_VERSION}.jar
+    mv postgresql-${POSTGRES_VERSION}.jar ${PIO_DIR}/lib/
     ;;
   "$MYSQL")
     if [[ ${distribution} = "$DISTRO_DEBIAN" ]]; then
@@ -349,10 +354,12 @@ case $source_setup in
       ${SED_CMD} "s|PIO_STORAGE_SOURCES_PGSQL|# PIO_STORAGE_SOURCES_PGSQL|" ${pio_dir}/conf/pio-env.sh
       ${SED_CMD} "s|# PIO_STORAGE_SOURCES_MYSQL|PIO_STORAGE_SOURCES_MYSQL|" ${pio_dir}/conf/pio-env.sh
     else
-      echo -e "\033[1;31mYour disribution not yet supported for automatic install :(\033[0m"
+      echo -e "\033[1;31mYour distribution not yet supported for automatic install :(\033[0m"
       echo -e "\033[1;31mPlease install MySQL manually!\033[0m"
       exit 4
     fi
+    curl -O http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.37/mysql-connector-java-${MYSQL_VERSION}.jar
+    mv mysql-connector-java-${MYSQL_VERSION}.jar ${PIO_DIR}/lib/
     ;;
   "$ES_HB")
     # Elasticsearch
